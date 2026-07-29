@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serum Creatinine 30% Rise Calculator</title>
+<style>
+  :root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #d1d5db;
+    --ok: #166534;
+    --ok-bg: #dcfce7;
+    --warn: #991b1b;
+    --warn-bg: #fee2e2;
+    --accent: #1d4ed8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 18px;
+  }
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  }
+  h1 {
+    font-size: 24px;
+    margin: 0 0 8px;
+    line-height: 1.25;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.45;
+  }
+  label {
+    display: block;
+    font-weight: 700;
+    margin: 14px 0 6px;
+  }
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 10px;
+  }
+  input, select {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    background: white;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(29,78,216,0.12);
+  }
+  .buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  button {
+    padding: 13px;
+    border: 0;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .primary {
+    background: var(--accent);
+    color: white;
+  }
+  .secondary {
+    background: #e5e7eb;
+    color: #111827;
+  }
+  .result {
+    display: none;
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    line-height: 1.5;
+  }
+  .result.ok {
+    display: block;
+    background: var(--ok-bg);
+    color: var(--ok);
+  }
+  .result.warn {
+    display: block;
+    background: var(--warn-bg);
+    color: var(--warn);
+  }
+  .big {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .detail {
+    font-size: 15px;
+  }
+  .formula {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid #e5e7eb;
+    padding-top: 14px;
+  }
+  .note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+  @media (max-width: 460px) {
+    .input-row { grid-template-columns: 1fr 120px; }
+    input, select { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Serum Creatinine 30% Rise Calculator</h1>
+    <div class="subtitle">
+      For rapid use in primary healthcare. The calculator accepts mg/dL or µmol/L and automatically converts the units when required.
+    </div>
+
+    <label for="baseline">Baseline serum creatinine</label>
+    <div class="input-row">
+      <input id="baseline" type="number" min="0" step="any" inputmode="decimal" placeholder="Enter value">
+      <select id="baselineUnit" aria-label="Baseline creatinine unit" onchange="updatePlaceholders()">
+        <option value="mgdl">mg/dL</option>
+        <option value="umoll">µmol/L</option>
+      </select>
+    </div>
+
+    <label for="current">Current serum creatinine</label>
+    <div class="input-row">
+      <input id="current" type="number" min="0" step="any" inputmode="decimal" placeholder="Enter value">
+      <select id="currentUnit" aria-label="Current creatinine unit" onchange="updatePlaceholders()">
+        <option value="mgdl">mg/dL</option>
+        <option value="umoll">µmol/L</option>
+      </select>
+    </div>
+
+    <div class="buttons">
+      <button class="primary" onclick="calculate()">Calculate</button>
+      <button class="secondary" onclick="resetForm()">Reset</button>
+    </div>
+
+    <div id="result" class="result"></div>
+
+    <div class="formula">
+      30% threshold = Baseline serum creatinine × 1.30
+    </div>
+    <div class="note">
+      A percentage rise is independent of the unit when both measurements use the same unit. If the reports use different units, this calculator converts them automatically. Conversion used: 1 mg/dL = 88.4 µmol/L.
+    </div>
+    <div class="note">
+      This tool supports protocol-based assessment and does not replace clinical judgment.
+    </div>
+  </div>
+</div>
+
+<script>
+const UMOL_PER_MGDL = 88.4;
+
+function toMgDl(value, unit) {
+  return unit === 'umoll' ? value / UMOL_PER_MGDL : value;
+}
+
+function fromMgDl(value, unit) {
+  return unit === 'umoll' ? value * UMOL_PER_MGDL : value;
+}
+
+function unitLabel(unit) {
+  return unit === 'umoll' ? 'µmol/L' : 'mg/dL';
+}
+
+function formatValue(value, unit) {
+  return unit === 'umoll' ? value.toFixed(1) : value.toFixed(2);
+}
+
+function updatePlaceholders() {
+  const bUnit = document.getElementById('baselineUnit').value;
+  const cUnit = document.getElementById('currentUnit').value;
+  document.getElementById('baseline').placeholder = bUnit === 'umoll' ? 'e.g. 100' : 'e.g. 1.20';
+  document.getElementById('current').placeholder = cUnit === 'umoll' ? 'e.g. 135' : 'e.g. 1.60';
+}
+
+function calculate() {
+  const baselineRaw = parseFloat(document.getElementById('baseline').value);
+  const currentRaw = parseFloat(document.getElementById('current').value);
+  const baselineUnit = document.getElementById('baselineUnit').value;
+  const currentUnit = document.getElementById('currentUnit').value;
+  const result = document.getElementById('result');
+
+  if (!isFinite(baselineRaw) || !isFinite(currentRaw) || baselineRaw <= 0 || currentRaw < 0) {
+    result.className = 'result warn';
+    result.innerHTML =
+      '<div class="big">Check the values</div>' +
+      '<div class="detail">Please enter a valid baseline value greater than 0 and a valid current value.</div>';
+    return;
+  }
+
+  const baselineMgDl = toMgDl(baselineRaw, baselineUnit);
+  const currentMgDl = toMgDl(currentRaw, currentUnit);
+  const thresholdMgDl = baselineMgDl * 1.30;
+  const percent = ((currentMgDl - baselineMgDl) / baselineMgDl) * 100;
+  const reached = currentMgDl >= thresholdMgDl;
+
+  const thresholdBaselineUnit = fromMgDl(thresholdMgDl, baselineUnit);
+  const thresholdCurrentUnit = fromMgDl(thresholdMgDl, currentUnit);
+
+  let thresholdText =
+    '30% threshold: <strong>' +
+    formatValue(thresholdBaselineUnit, baselineUnit) + ' ' + unitLabel(baselineUnit) +
+    '</strong>';
+
+  if (baselineUnit !== currentUnit) {
+    thresholdText +=
+      ' (equivalent to <strong>' +
+      formatValue(thresholdCurrentUnit, currentUnit) + ' ' + unitLabel(currentUnit) +
+      '</strong>)';
+  }
+
+  result.className = reached ? 'result warn' : 'result ok';
+  result.innerHTML =
+    '<div class="big">' +
+    (reached ? '30% rise reached' : '30% rise not reached') +
+    '</div>' +
+    '<div class="detail">' +
+    'Percentage change: <strong>' + percent.toFixed(1) + '%</strong><br>' +
+    thresholdText + '<br>' +
+    'Current creatinine: <strong>' +
+    formatValue(currentRaw, currentUnit) + ' ' + unitLabel(currentUnit) +
+    '</strong>' +
+    (baselineUnit !== currentUnit ? '<br>Values were compared after automatic unit conversion.' : '') +
+    '</div>';
+}
+
+function resetForm() {
+  document.getElementById('baseline').value = '';
+  document.getElementById('current').value = '';
+  document.getElementById('baselineUnit').value = 'mgdl';
+  document.getElementById('currentUnit').value = 'mgdl';
+  const result = document.getElementById('result');
+  result.className = 'result';
+  result.innerHTML = '';
+  updatePlaceholders();
+  document.getElementById('baseline').focus();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') calculate();
+});
+
+updatePlaceholders();
+</script>
+</body>
+</html>
